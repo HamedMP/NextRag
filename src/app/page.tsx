@@ -31,6 +31,9 @@ export default function Home() {
                   <Database className='h-4 w-4' /> PostgreSQL + pgvector
                 </li>
                 <li className='flex items-center gap-2'>
+                  <GitBranch className='h-4 w-4' /> Inngest pipelines
+                </li>
+                <li className='flex items-center gap-2'>
                   <Braces className='h-4 w-4' /> Next.js 15
                 </li>
                 <li className='flex items-center gap-2'>
