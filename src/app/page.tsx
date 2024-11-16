@@ -46,8 +46,10 @@ export default function Home() {
           <Card className='p-6 border-2 hover:border-primary/50 transition-colors'>
             <div className='flex flex-col gap-4'>
               <div className='font-mono text-sm'>
-                <div className='text-muted-foreground'>// Quick start</div>
-                <code className='text-primary'>npm run dev</code>
+                <div className='text-muted-foreground'>
+                  &#47;&#47; Quick start
+                </div>
+                <code className='text-primary'>pnpm dev</code>
               </div>
               <div className='flex-1' />
               <div className='flex gap-4'>
