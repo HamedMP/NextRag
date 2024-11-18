@@ -1,8 +1,8 @@
-import { itemsVectorDB } from '@/lib/db/vector';
+import { oaiVectorDB } from '@/lib/db/vector';
 import { DB_CONFIG } from '@/lib/db/config';
 
 export async function searchSimilarChunks(query: string, limit = 5) {
-  return itemsVectorDB.searchSimilar(query, { limit });
+  return oaiVectorDB.searchSimilar(query, { limit });
 }
 
 export async function searchWithOptions(
@@ -17,7 +17,7 @@ export async function searchWithOptions(
     };
   }
 ) {
-  return itemsVectorDB.searchSimilar(query, options);
+  return oaiVectorDB.searchSimilar(query, options);
 }
 
 export async function searchByMetadata(
@@ -29,7 +29,7 @@ export async function searchByMetadata(
   },
   limit = 5
 ) {
-  return itemsVectorDB.searchSimilar(query, {
+  return oaiVectorDB.searchSimilar(query, {
     limit,
     filter: metadata,
   });

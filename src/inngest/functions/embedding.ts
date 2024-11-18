@@ -56,12 +56,12 @@ export const embedBatchTexts = inngest.createFunction(
     const { texts, chunkingMethod, metadata = {} } = event.data;
 
     const results = await step.run('Process Batch', async () => {
-      const promises = texts.map((text) =>
+      const promises = texts.map((text: string) =>
         vectorDB.addText(text, {
           chunkingMethod,
           metadata: {
             ...metadata,
-            batchId: event.id, // Add batch tracking
+            batchId: event.id,
             processedAt: new Date().toISOString(),
           },
         })
