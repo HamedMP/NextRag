@@ -13,11 +13,11 @@ model items {
 }
 
 model oai {
-  id        BigInt                 @id @default(autoincrement())
-  chunk     String?
-  embedding Unsupported("vector")?
+  id          BigInt                 @id @default(autoincrement())
+  chunk       String?
+  embedding   Unsupported("vector")?
+  createdAt   DateTime               @default(now())
+  metadata    Json?                  @default("{}")
+  updatedAt   DateTime               @default(now())
   dummy_field String?
-  createdAt DateTime               @default(now())
-  metadata  Json?                  @default("{}")
-  updatedAt DateTime               @default(now())
 }
