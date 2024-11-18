@@ -1,0 +1,23 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_URL")
+}
+
+model items {
+  id        BigInt                 @id @default(autoincrement())
+  embedding Unsupported("vector")?
+}
+
+model oai {
+  id        BigInt                 @id @default(autoincrement())
+  chunk     String?
+  embedding Unsupported("vector")?
+  dummy_field String?
+  createdAt DateTime               @default(now())
+  metadata  Json?                  @default("{}")
+  updatedAt DateTime               @default(now())
+}
