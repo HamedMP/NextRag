@@ -1,6 +1,6 @@
 # Next.js RAG with PGVector
 
-A production-ready implementation of Retrieval Augmented Generation (RAG) using Next.js, PostgreSQL + pgvector, and Vercel AI SDK.
+A production-ready implementation of Retrieval Augmented Generation (RAG) using Next.js, PostgreSQL + pgvector (with `node-pg`), and Vercel AI SDK.
 
 ## Introduction
 
@@ -44,7 +44,7 @@ This codebase provides:
 - **PostgreSQL + pgvector** - Vector similarity search
 - **Vercel AI SDK** - AI/LLM utilities
 - **Prisma** - Type-safe database schema
-- **@vercel/postgres** - SQL query sanitization
+- **node-pg** - SQL query sanitization
 - **Inngest** - Background job processing
 - **OpenAI** - Embeddings and chat completion
 - **Tailwind CSS** - Styling
@@ -62,8 +62,10 @@ pnpm install
 
 ## 2. **Environment Setup**
 
+You need environment variables for the LLM of your choice and the Database
+
 ```bash
-cp .env.example .env.local
+cp .env.example .env
 ```
 
 Required environment variables:
@@ -74,6 +76,13 @@ POSTGRES_URL="postgres://..."
 
 # OpenAI
 OPENAI_API_KEY="sk-..."
+
+# node-pg
+PGUSER=...
+PGPASSWORD=...
+PGHOST=...
+PGPORT=...
+PGDATABASE=...
 
 # Inngest (optional, for background jobs)
 INNGEST_EVENT_KEY="..."
@@ -151,7 +160,17 @@ CREATE INDEX ON documents USING hnsw (embedding vector_cosine_ops);
 pnpm prisma migrate deploy
 ```
 
-## 4. **Run Development Server**
+## 4. **Run Development Server and Inngest server**
+
+In a separate terminal, run the Inngest server:
+
+```bash
+pnpm run inngest
+```
+
+The server will start on `http://127.0.0.1:8288`.
+
+In another separate terminal, run the Next.js development server:
 
 ```bash
 pnpm dev
@@ -246,7 +265,7 @@ await vectorDB.searchSimilar(query, { distance: 'inner_product' });
 ```
 src/
 ├── app/                    # Next.js App Router pages
-│   ├── (chat)/            # Chat interface
+│   ├── (chat)/            # Playground
 │   ├── api/               # API routes
 │   └── docs/              # Documentation pages
 ├── components/            # UI components
