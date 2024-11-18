@@ -1,6 +1,6 @@
 # Next.js RAG with PGVector
 
-A production-ready implementation of Retrieval Augmented Generation (RAG) using Next.js, PostgreSQL + pgvector (with `node-pg`), and Vercel AI SDK.
+A production-ready implementation of Retrieval Augmented Generation (RAG) using Next.js, PostgreSQL + pgvector (with `node-pg`), Prisma, and Vercel AI SDK.
 
 ## Introduction
 
