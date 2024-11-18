@@ -1,6 +1,7 @@
-import { sql } from '@vercel/postgres';
+import { query } from './pg';
 import { openai } from '@ai-sdk/openai';
 import { embed, embedMany } from 'ai';
+
 import {
   DB_CONFIG,
   ChunkMetadata,
@@ -8,15 +9,31 @@ import {
   VectorDBConfig,
 } from './config';
 
+type ChunkingMethod = 'sentence' | 'paragraph' | 'fixed';
+
+interface VectorDBConfigType {
+  embedding: {
+    model: string;
+    dimensions: number;
+    distance: 'cosine' | 'euclidean' | 'inner_product';
+  };
+  chunking: {
+    defaultMethod: ChunkingMethod;
+    fixedSize: number;
+  };
+  search: {
+    defaultLimit: number;
+    reranking: boolean;
+  };
+}
+
 export class VectorDB {
   private embeddingModel;
   private tableConfig: VectorTableConfig;
-  private config: typeof DB_CONFIG;
+  private config: VectorDBConfigType;
 
   constructor(tableConfig: VectorTableConfig, config?: VectorDBConfig) {
     this.tableConfig = tableConfig;
-
-    // Merge provided config with defaults
     this.config = {
       embedding: {
         ...DB_CONFIG.embedding,
@@ -36,58 +53,53 @@ export class VectorDB {
   }
 
   /**
+   *
    * Adds chunks to the database with their embeddings
    */
   async addChunks(chunks: string[], metadata?: Partial<ChunkMetadata>) {
-    const { embeddings } = await embedMany({
-      model: this.embeddingModel,
-      values: chunks,
-    });
+    try {
+      const { embeddings } = await embedMany({
+        model: this.embeddingModel,
+        values: chunks,
+      });
 
-    const baseMetadata: ChunkMetadata = {
-      date: new Date().toISOString(),
-      embeddingModel: this.config.embedding.model,
-      chunkingMethod: this.config.chunking.method,
-      chunkIndex: 0,
-      totalChunks: chunks.length,
-      ...metadata,
-    };
+      const baseMetadata: ChunkMetadata = {
+        date: new Date().toISOString(),
+        embeddingModel: this.config.embedding.model,
+        chunkingMethod: this.config.chunking.defaultMethod,
+        chunkIndex: 0,
+        totalChunks: chunks.length,
+        ...metadata,
+      };
 
-    const columns = this.tableConfig.columns;
-    const insertColumns = [
-      columns.content,
-      columns.vector,
-      columns.metadata,
-    ].filter(Boolean);
-
-    await Promise.all(
-      chunks.map(
-        (chunk, i) =>
-          sql`
-          INSERT INTO ${sql(this.tableConfig.tableName)} (${sql(
-            insertColumns.join(', ')
-          )})
-          VALUES (
-            ${chunk}, 
-            ${JSON.stringify(embeddings[i])}, 
-            ${
-              columns.metadata
-                ? JSON.stringify({ ...baseMetadata, chunkIndex: i })
-                : undefined
-            }
+      for (let i = 0; i < chunks.length; i++) {
+        await query(
+          `INSERT INTO ${this.tableConfig.tableName} (
+            "${this.tableConfig.columns.content}", 
+            "${this.tableConfig.columns.vector}", 
+            "${this.tableConfig.columns.metadata}"
           )
-        `
-      )
-    );
+          VALUES ($1, $2::vector, $3)`,
+          [
+            chunks[i],
+            JSON.stringify(embeddings[i]),
+            JSON.stringify({ ...baseMetadata, chunkIndex: i }),
+          ]
+        );
+      }
 
-    return { count: chunks.length };
+      return { count: chunks.length };
+    } catch (error) {
+      console.error('Error in addChunks:', error);
+      throw error;
+    }
   }
 
   /**
    * Searches for similar chunks using different distance metrics
    */
   async searchSimilar(
-    query: string,
+    searchQuery: string,
     options?: {
       limit?: number;
       distance?: typeof DB_CONFIG.embedding.distance;
@@ -97,7 +109,7 @@ export class VectorDB {
   ) {
     const { embedding } = await embed({
       model: this.embeddingModel,
-      value: query,
+      value: searchQuery,
     });
 
     const distanceOp = {
@@ -108,28 +120,30 @@ export class VectorDB {
 
     const columns = this.tableConfig.columns;
     const selectColumns =
-      options?.select ||
-      [columns.content, columns.metadata, columns.createdAt].filter(Boolean);
+      options?.select?.map((col) => `"${col}"`) ||
+      [columns.content, columns.metadata, columns.createdAt]
+        .filter(Boolean)
+        .map((col) => `"${col}"`);
 
     let filterClause = '';
     if (options?.filter && columns.metadata) {
       filterClause =
         'WHERE ' +
         Object.entries(options.filter)
-          .map(([key, value]) => `${columns.metadata}->>'${key}' = '${value}'`)
+          .map(
+            ([key, value]) => `"${columns.metadata}"->>'${key}' = '${value}'`
+          )
           .join(' AND ');
     }
 
-    const { rows } = await sql.query(
-      `
-      SELECT 
+    const { rows } = await query(
+      `SELECT 
         ${selectColumns.join(', ')},
-        ${columns.vector} ${distanceOp} $1::vector AS distance
-      FROM ${this.tableConfig.tableName}
+        "${columns.vector}" ${distanceOp} $1::vector AS distance
+      FROM "${this.tableConfig.tableName}"
       ${filterClause}
       ORDER BY distance ASC
-      LIMIT $2
-      `,
+      LIMIT $2`,
       [
         JSON.stringify(embedding),
         options?.limit || this.config.search.defaultLimit,
@@ -142,7 +156,10 @@ export class VectorDB {
   /**
    * Utility function to chunk text
    */
-  chunkText(text: string, method = this.config.chunking.method): string[] {
+  chunkText(
+    text: string,
+    method = this.config.chunking.defaultMethod
+  ): string[] {
     switch (method) {
       case 'sentence':
         return text
@@ -175,6 +192,7 @@ export class VectorDB {
         if (currentChunk) chunks.push(currentChunk.trim());
         return chunks;
     }
+    return [];
   }
 
   /**
@@ -183,7 +201,7 @@ export class VectorDB {
   async addText(
     text: string,
     options?: {
-      chunkingMethod?: typeof DB_CONFIG.chunking.defaultMethod;
+      chunkingMethod?: ChunkingMethod;
       metadata?: Partial<ChunkMetadata>;
     }
   ) {
@@ -191,8 +209,36 @@ export class VectorDB {
     return this.addChunks(chunks, {
       ...options?.metadata,
       sourceText: text.slice(0, 100) + '...',
-      chunkingMethod: options?.chunkingMethod || this.config.chunking.method,
+      chunkingMethod:
+        options?.chunkingMethod || this.config.chunking.defaultMethod,
     });
+  }
+
+  async select(
+    options: {
+      limit?: number;
+      filter?: Record<string, unknown>;
+      orderBy?: string;
+      order?: 'ASC' | 'DESC';
+    } = {}
+  ) {
+    const limit = options.limit || 10;
+    const orderBy = options.orderBy
+      ? `ORDER BY ${options.orderBy} ${options.order || 'ASC'}`
+      : '';
+
+    const { rows } = await query(
+      `SELECT ${Object.values(this.tableConfig.columns)
+        .filter(Boolean)
+        .map((col) => `"${col}"`)
+        .join(', ')}
+      FROM "${this.tableConfig.tableName}"
+      ${orderBy}
+      LIMIT $1`,
+      [limit]
+    );
+
+    return rows;
   }
 }
 
@@ -214,14 +260,5 @@ export const itemsVectorDB = new VectorDB({
   columns: {
     id: 'id',
     vector: 'embedding',
-  },
-  config: {
-    embedding: {
-      model: 'text-embedding-3-small',
-      dimensions: 1536,
-    },
-    search: {
-      defaultLimit: 10,
-    },
   },
 });
