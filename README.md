@@ -1,5 +1,6 @@
-# Next.js RAG with PGVector
+# NextRag: Next.js RAG with PGVector
 
+![NextRAG Demo](./public/nextrag.png)
 A production-ready implementation of Retrieval Augmented Generation (RAG) using Next.js, PostgreSQL + pgvector (with `node-pg`), Prisma, and Vercel AI SDK.
 
 ## Introduction
@@ -55,8 +56,8 @@ This codebase provides:
 ## 1. **Clone and Install**
 
 ```bash
-git clone https://github.com/hamedmp/nextjs-rag-postgres
-cd nextjs-rag-postgres
+git clone https://github.com/hamedmp/nextrag
+cd nextrag
 pnpm install
 ```
 
