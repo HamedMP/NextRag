@@ -6,9 +6,28 @@ import { SearchTab } from "@/components/tabs/search-tab";
 import { ChatTab } from "@/components/tabs/chat-tab";
 import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Lightbulb } from "lucide-react";
+import { Lightbulb, AlertTriangle } from "lucide-react";
 
 export default function PlaygroundPage() {
+	const isProduction = process.env.NODE_ENV === "production";
+
+	if (isProduction) {
+		return (
+			<div className="max-w-6xl mx-auto space-y-8 py-8 px-4">
+				<Alert variant="destructive">
+					<AlertTriangle className="h-4 w-4" />
+					<AlertTitle>Demo Environment Only</AlertTitle>
+					<AlertDescription>
+						This playground is configured to work only in development
+						environment with your local database setup. To use this feature,
+						please run the application locally after setting up your own
+						database and environment variables.
+					</AlertDescription>
+				</Alert>
+			</div>
+		);
+	}
+
 	return (
 		<div className="max-w-6xl mx-auto space-y-8 py-8 px-4">
 			<div className="space-y-4">
@@ -22,11 +41,11 @@ export default function PlaygroundPage() {
 
 			<Alert variant="default" className="bg-muted">
 				<Lightbulb className="h-4 w-4" />
-				<AlertTitle>Getting Started</AlertTitle>
+				<AlertTitle>Local Development Only</AlertTitle>
 				<AlertDescription>
-					Start by ingesting some documents in the &quot;Ingest Data&quot; tab.
-					Then try searching through your content or start a chat session based
-					on your documents.
+					This playground works with your local database setup. Make sure you
+					have configured your environment variables and database connections
+					correctly before using these features.
 				</AlertDescription>
 			</Alert>
 
@@ -62,8 +81,9 @@ export default function PlaygroundPage() {
 
 			<div className="text-sm text-muted-foreground">
 				<p>
-					Note: This is a demo environment. Data may be periodically cleared.
-					For production use, please deploy your own instance.
+					Note: This is a development environment playground. For production
+					use, please deploy your own instance with proper database
+					configuration.
 				</p>
 			</div>
 		</div>

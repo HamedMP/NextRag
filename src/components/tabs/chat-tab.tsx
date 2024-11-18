@@ -6,14 +6,20 @@ import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
+import type { SyntaxHighlighterProps } from "react-syntax-highlighter";
 
 export function ChatTab() {
+	const isProduction = process.env.NODE_ENV === "production";
 	const { messages, input, handleInputChange, handleSubmit, data } = useChat({
 		api: "/api/chat",
 	});
 
 	const handleChatSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
+		if (isProduction) {
+			toast.error("Chat is disabled in production. Please run locally.");
+			return;
+		}
 		if (!input.trim()) {
 			toast.error("Please enter a question");
 			return;
@@ -81,10 +87,10 @@ export function ChatTab() {
 														);
 														return match ? (
 															<SyntaxHighlighter
-																style={vscDarkPlus as any}
+																style={vscDarkPlus}
 																language={match[1]}
 																PreTag="div"
-																{...props}
+																{...(props as SyntaxHighlighterProps)}
 															>
 																{String(children).replace(/\n$/, "")}
 															</SyntaxHighlighter>
@@ -111,10 +117,17 @@ export function ChatTab() {
 					<input
 						value={input}
 						onChange={handleInputChange}
-						placeholder="Ask a question about the knowledge base..."
+						placeholder={
+							isProduction
+								? "Chat disabled in production"
+								: "Ask a question about the knowledge base..."
+						}
 						className="flex-1 p-2 border rounded-md"
+						disabled={isProduction}
 					/>
-					<Button type="submit">Send</Button>
+					<Button type="submit" disabled={isProduction}>
+						Send
+					</Button>
 				</form>
 			</CardContent>
 		</Card>
