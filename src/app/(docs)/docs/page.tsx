@@ -207,6 +207,11 @@ const vectorDB = new VectorDB({
   search: {
     defaultLimit: 5,
     reranking: false,
+    method: 'hybrid',  // 'vector', 'bm25', or 'hybrid'
+    weights: {
+      vector: 0.6,     // Weight for vector similarity
+      bm25: 0.4,       // Weight for BM25 text relevance
+    }
   }
 });
                     `}</CodeBlock>
@@ -228,6 +233,35 @@ const results = await vectorDB.searchSimilar(query, {
   limit: 5,
   distance: 'cosine',
   filter: { source: 'docs' }
+});
+                    `}</CodeBlock>
+									</div>
+								</div>
+
+								<div className="space-y-4">
+									<h3 className="text-lg font-semibold">Search Methods</h3>
+									<div className="pl-6 border-l-2 border-muted space-y-3">
+										<CodeBlock language="typescript">{`
+// Vector similarity search
+const vectorResults = await vectorDB.search(query, {
+  method: 'vector',
+  limit: 5
+});
+
+// BM25 text relevance search
+const bm25Results = await vectorDB.search(query, {
+  method: 'bm25',
+  limit: 5
+});
+
+// Hybrid search (combining vector and BM25)
+const hybridResults = await vectorDB.search(query, {
+  method: 'hybrid',
+  weights: {
+    vector: 0.6,  // Adjust weights based on your needs
+    bm25: 0.4
+  },
+  limit: 5
 });
                     `}</CodeBlock>
 									</div>
@@ -281,7 +315,8 @@ const chunks = vectorDB.chunkText(text, 'fixed');
 								<div className="space-y-4">
 									<h3 className="text-lg font-semibold">Similarity Metrics</h3>
 									<div className="pl-6 border-l-2 border-muted space-y-3">
-										<CodeBlock language="typescript">{`
+										<CodeBlock language="typescript">
+											{`
 // Cosine similarity (normalized vectors)
 const results = await vectorDB.searchSimilar(query, {
   distance: 'cosine'
@@ -296,7 +331,139 @@ const results = await vectorDB.searchSimilar(query, {
 const results = await vectorDB.searchSimilar(query, {
   distance: 'inner_product'
 });
+                    `}
+										</CodeBlock>
+									</div>
+								</div>
+
+								<div className="space-y-4">
+									<h3 className="text-lg font-semibold">
+										Search Implementation
+									</h3>
+									<div className="pl-6 border-l-2 border-muted space-y-3">
+										<CodeBlock language="typescript">
+											{`
+// Server Action
+export async function searchDocuments(query: string) {
+  return vectorDB.search(query, {
+    method: 'hybrid',
+    weights: {
+      vector: 0.6,
+      bm25: 0.4,
+    },
+    limit: 5,
+    filter: { source: 'docs' }
+  });
+}
+
+// API Route
+export async function POST(req: Request) {
+  const { query, options } = await req.json();
+  
+  const results = await vectorDB.search(query, {
+    method: options?.method || 'hybrid',
+    weights: options?.weights,
+    limit: options?.limit || 5
+  });
+
+  return NextResponse.json({
+    results,
+    metadata: {
+      query,
+      count: results.length,
+      method: options?.method || 'hybrid'
+    }
+  });
+}
+
+// React Component
+function SearchResults({ results }) {
+  return results.map(result => (
+    <div key={result.id}>
+      <div className="text-sm">
+        {result.similarity !== undefined && 
+          \`Similarity: \${result.similarity.toFixed(3)}\`}
+        {result.vectorScore !== undefined && 
+          \` (Vector: \${result.vectorScore.toFixed(3)})\`}
+        {result.bm25Score !== undefined && 
+          \` (BM25: \${result.bm25Score.toFixed(3)})\`}
+      </div>
+      <div>{result.content}</div>
+    </div>
+  ));
+}`}
+										</CodeBlock>
+									</div>
+								</div>
+
+								<div className="space-y-4">
+									<h3 className="text-lg font-semibold">
+										Search Methods Comparison
+									</h3>
+									<div className="pl-6 border-l-2 border-muted space-y-3">
+										<CodeBlock language="typescript">{`
+// Vector search - best for semantic similarity
+const semanticResults = await vectorDB.search(
+  "What is the meaning of life?",
+  { method: 'vector' }
+);
+
+// BM25 search - best for keyword matching
+const keywordResults = await vectorDB.search(
+  "installation requirements postgres",
+  { method: 'bm25' }
+);
+
+// Hybrid search - balanced approach
+const hybridResults = await vectorDB.search(
+  "how to implement authentication",
+  {
+    method: 'hybrid',
+    weights: {
+      vector: 0.7,  // Emphasize semantic understanding
+      bm25: 0.3     // Consider keyword matches
+    }
+  }
+);
+
+// With metadata filtering
+const filteredResults = await vectorDB.search(
+  "deployment instructions",
+  {
+    method: 'hybrid',
+    weights: { vector: 0.6, bm25: 0.4 },
+    filter: {
+      category: 'deployment',
+      version: 'v2'
+    }
+  }
+);
                     `}</CodeBlock>
+									</div>
+								</div>
+
+								<div className="space-y-4">
+									<h3 className="text-lg font-semibold">Use Case Examples</h3>
+									<div className="pl-6 border-l-2 border-muted space-y-3">
+										<p>
+											Choose the appropriate search method based on the use
+											case:
+										</p>
+										<ul className="list-disc list-inside space-y-2 text-muted-foreground">
+											<li>
+												Documentation search: Hybrid search for both accuracy
+												and relevance
+											</li>
+											<li>
+												Semantic Q&A: Vector search for understanding context
+											</li>
+											<li>
+												Technical search: BM25 for precise terminology matching
+											</li>
+											<li>
+												Chat context: Hybrid search with higher vector weight
+											</li>
+										</ul>
 									</div>
 								</div>
 							</div>
