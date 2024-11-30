@@ -4,13 +4,26 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useState } from "react";
 import { toast } from "sonner";
+import { env } from "@/lib/env.mjs";
 
 type SearchResult = {
 	chunk: string;
-	distance: number;
+	distance?: number;
+	similarity?: number;
+	vectorScore?: number;
+	bm25Score?: number;
 };
 
 export function SearchTab() {
+	// Return null in production and preview deployments
+	if (
+		env.NODE_ENV === "production" ||
+		env.NODE_ENV === "test" ||
+		env.NODE_ENV === "preview"
+	) {
+		return null;
+	}
+
 	const [query, setQuery] = useState("");
 	const [loading, setLoading] = useState(false);
 	const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -66,7 +79,21 @@ export function SearchTab() {
 									<CardContent className="pt-4">
 										<div className="text-sm space-y-2">
 											<div className="font-mono text-xs text-muted-foreground">
-												Similarity: {(1 - result.distance).toFixed(3)}
+												{result.similarity !== undefined
+													? `Similarity: ${result.similarity.toFixed(3)}`
+													: result.distance !== undefined
+														? `Similarity: ${(1 - result.distance).toFixed(3)}`
+														: "Score not available"}
+												{result.vectorScore !== undefined && (
+													<span className="ml-2">
+														(Vector: {result.vectorScore.toFixed(3)})
+													</span>
+												)}
+												{result.bm25Score !== undefined && (
+													<span className="ml-2">
+														(BM25: {result.bm25Score.toFixed(3)})
+													</span>
+												)}
 											</div>
 											<div className="bg-muted p-3 rounded-md">
 												{result.chunk}

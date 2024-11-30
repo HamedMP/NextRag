@@ -11,8 +11,7 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(['development', 'test', 'preview', 'production'])
       .default('development'),
-    DATABASE_URL: z.string().url(),
-    // DATABASE_URL: z.string().url(),
+    POSTGRES_URL: z.string().url(),
     // OPENAI_API_KEY: z.string().min(1),
   },
   /*
@@ -31,8 +30,7 @@ export const env = createEnv({
    */
   runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
-    DATABASE_URL: process.env.DATABASE_URL,
-    // DATABASE_URL: process.env.DATABASE_URL,
+    POSTGRES_URL: process.env.POSTGRES_URL,
     // OPEN_AI_API_KEY: process.env.OPEN_AI_API_KEY,
     // NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:
     //   process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,

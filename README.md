@@ -261,6 +261,82 @@ await vectorDB.searchSimilar(query, { distance: 'euclidean' });
 await vectorDB.searchSimilar(query, { distance: 'inner_product' });
 ```
 
+## Search Methods
+
+NextRAG supports three search methods:
+
+1. **Vector Similarity Search**
+
+   - Uses pgvector for semantic similarity
+   - Best for understanding context and meaning
+   - ```typescript
+     await vectorDB.search(query, { method: 'vector' });
+     ```
+
+2. **BM25 Text Search**
+
+   - Uses PostgreSQL's full-text search with BM25 ranking
+   - Best for keyword matching and exact phrases
+   - ```typescript
+     await vectorDB.search(query, { method: 'bm25' });
+     ```
+
+3. **Hybrid Search**
+   - Combines vector similarity and BM25 scores
+   - Balances semantic understanding with keyword relevance
+   - ```typescript
+     await vectorDB.search(query, {
+       method: 'hybrid',
+       weights: {
+         vector: 0.6, // Adjust these weights
+         bm25: 0.4, // based on your needs
+       },
+     });
+     ```
+
+### Configuration
+
+Configure search methods in your VectorDB instance:
+
+```typescript
+const vectorDB = new VectorDB(
+  {
+    // ... table config
+  },
+  {
+    search: {
+      method: 'hybrid', // default search method
+      weights: {
+        vector: 0.6, // semantic similarity weight
+        bm25: 0.4, // text relevance weight
+      },
+      defaultLimit: 5,
+      reranking: false,
+    },
+  }
+);
+```
+
+### Search Results
+
+Results include both vector and BM25 scores:
+
+```typescript
+{
+  content: string;           // The matched text
+  similarity?: number;       // Combined similarity score (0-1)
+  vectorScore?: number;      // Vector similarity score (0-1)
+  bm25Score?: number;       // BM25 relevance score (0-1)
+  metadata?: Record<string, any>;
+}
+```
+
+Choose the appropriate search method based on your needs:
+
+- Use `vector` for semantic understanding
+- Use `bm25` for keyword matching
+- Use `hybrid` for balanced results
+
 ## Project Structure
 
 ```

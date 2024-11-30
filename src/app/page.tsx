@@ -33,10 +33,12 @@ export default function Home() {
 							<h2 className="font-semibold text-xl">Core Stack</h2>
 							<ul className="space-y-2 text-muted-foreground">
 								<li className="flex items-center gap-2">
-									<Database className="h-4 w-4" /> PostgreSQL + pgvector
+									<Database className="h-4 w-4" /> PostgreSQL + pgvector with
+									BM25
 								</li>
 								<li className="flex items-center gap-2">
-									<GitBranch className="h-4 w-4" /> Inngest pipelines
+									<GitBranch className="h-4 w-4" /> Hybrid vector + keyword
+									search
 								</li>
 								<li className="flex items-center gap-2">
 									<Braces className="h-4 w-4" /> Next.js 15

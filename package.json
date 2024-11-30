@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "inngest": "pnpm dlx inngest-cli@latest dev --no-discovery -u localhost:3000/api/inngest"
+    "inngest": "pnpm dlx inngest-cli@latest dev --no-discovery -u localhost:3000/api/inngest",
+    "test": "vitest",
+    "test:watch": "vitest watch",
+    "coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@ai-sdk/openai": "^0.0.72",
@@ -44,11 +47,13 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/react-syntax-highlighter": "^15.5.13",
+    "@vitest/coverage-v8": "^2.1.6",
     "eslint": "^8",
     "eslint-config-next": "15.0.3",
     "postcss": "^8",
     "prisma": "^5.22.0",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^2.1.6"
   }
 }
