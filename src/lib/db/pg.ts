@@ -2,6 +2,7 @@ import { Pool, PoolClient, QueryResult } from 'pg';
 
 // Creates a global connection pool
 const pool = new Pool({
+  connectionString: process.env.POSTGRES_URL,
   sslmode: 'require',
   ssl: {
     rejectUnauthorized: false, // For development. In production, you might want this true

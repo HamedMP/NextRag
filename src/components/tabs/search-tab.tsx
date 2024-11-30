@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useState } from "react";
 import { toast } from "sonner";
+import { env } from "@/lib/env.mjs";
 
 type SearchResult = {
 	chunk: string;
@@ -14,6 +15,15 @@ type SearchResult = {
 };
 
 export function SearchTab() {
+	// Return null in production and preview deployments
+	if (
+		env.NODE_ENV === "production" ||
+		env.NODE_ENV === "test" ||
+		env.NODE_ENV === "preview"
+	) {
+		return null;
+	}
+
 	const [query, setQuery] = useState("");
 	const [loading, setLoading] = useState(false);
 	const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
