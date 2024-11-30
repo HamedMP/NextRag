@@ -5,8 +5,14 @@ import { inngest } from "@/inngest/client";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { env } from "@/lib/env.mjs";
 
 export function IngestTab() {
+	// Return null in production and preview
+	if (env.NODE_ENV === "production" || env.NODE_ENV === "preview") {
+		return null;
+	}
+
 	const [text, setText] = useState("");
 	const [loading, setLoading] = useState(false);
 
